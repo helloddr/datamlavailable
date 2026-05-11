@@ -1,0 +1,17 @@
+!pip install nibabel matplotlib tqdm
+!nvidia-smi
+
+!mkdir -p /kaggle/working/brats_data
+!find /kaggle/input/private-brats-2023-gli-training-data -name "*.zip" -print0 | xargs -0 -n 1 unzip -q -d /kaggle/working/brats_data
+
+!python code.py validate --data-dir "/kaggle/working/brats_data"
+
+!python code.py train \
+  --data-dir "/kaggle/working/brats_data" \
+  --epochs 25 \
+  --batch-size 8 \
+  --slice-stride 4 \
+  --include-empty-slices \
+  --amp \
+  --output-path /kaggle/working/brats_full_best_model.pt \
+  --metrics-path /kaggle/working/brats_full_metrics.json

@@ -1,0 +1,9 @@
+{
+  "patient_id": "research_case_001",
+  "age": 52,
+  "sex": "Female",
+  "clinical_history": "Headache and dizziness",
+  "modality": "MRI",
+  "sequence": "T1 contrast",
+  "notes": "De-identified research sample."
+}

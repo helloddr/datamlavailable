@@ -1,0 +1,12 @@
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ARTIFACT_DIR = PROJECT_ROOT / "artifacts"
+REPORT_DIR = PROJECT_ROOT / "reports"
+
+IMAGE_SIZE = 224
+DEFAULT_BATCH_SIZE = 16
+DEFAULT_EPOCHS = 5
+DEFAULT_LEARNING_RATE = 1e-4
+DEFAULT_SEED = 42

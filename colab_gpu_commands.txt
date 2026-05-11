@@ -1,0 +1,17 @@
+from google.colab import drive
+drive.mount("/content/drive")
+
+!pip install nibabel matplotlib tqdm
+!nvidia-smi
+
+!python "/content/drive/MyDrive/paper2/code.py" validate --data-dir "/content/drive/MyDrive/paper2/ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData"
+
+!python "/content/drive/MyDrive/paper2/code.py" train \
+  --data-dir "/content/drive/MyDrive/paper2/ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData" \
+  --epochs 25 \
+  --batch-size 8 \
+  --slice-stride 4 \
+  --include-empty-slices \
+  --amp \
+  --output-path "/content/drive/MyDrive/paper2/brats_full_best_model.pt" \
+  --metrics-path "/content/drive/MyDrive/paper2/brats_full_metrics.json"

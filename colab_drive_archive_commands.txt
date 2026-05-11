@@ -1,0 +1,26 @@
+from google.colab import drive
+drive.mount("/content/drive")
+
+!pip install nibabel matplotlib tqdm
+!nvidia-smi
+
+# Change this path if your file is in a different Google Drive folder.
+DRIVE_ARCHIVE = "/content/drive/MyDrive/paper2/brats_training_data.tar"
+
+!mkdir -p /content/brats_data
+!tar -xf "$DRIVE_ARCHIVE" -C /content/brats_data
+
+# The tar contains the original top-level dataset folder.
+DATA_DIR = "/content/brats_data/ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData"
+
+!python "/content/drive/MyDrive/paper2/code.py" validate --data-dir "$DATA_DIR"
+
+!python "/content/drive/MyDrive/paper2/code.py" train \
+  --data-dir "$DATA_DIR" \
+  --epochs 25 \
+  --batch-size 8 \
+  --slice-stride 4 \
+  --include-empty-slices \
+  --amp \
+  --output-path "/content/drive/MyDrive/paper2/brats_full_best_model.pt" \
+  --metrics-path "/content/drive/MyDrive/paper2/brats_full_metrics.json"

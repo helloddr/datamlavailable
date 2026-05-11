@@ -75,6 +75,9 @@ Ran on 5 held-out patient test cases without retraining.
 | Recall | 0.9395 |
 | Specificity | 0.9976 |
 | Accuracy | 0.9970 |
+| Hausdorff-95 | 5.2751 voxels |
+| Mean inference time | 2.1934 seconds/case |
+| Peak GPU memory | 46.7314 MB |
 
 Case Dice mean: `0.8673`
 

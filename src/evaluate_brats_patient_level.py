@@ -4,12 +4,14 @@ import argparse
 import csv
 import json
 import random
+import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 import torch
+from scipy.ndimage import binary_erosion, distance_transform_edt
 from tqdm import tqdm
 
 from .brats_data import MODALITIES, BraTSCase, find_brats_cases, load_case_modalities, load_case_segmentation
@@ -83,6 +85,28 @@ def metrics_from_counts(counts: dict[str, int]) -> dict[str, float]:
         "specificity": float(specificity),
         "accuracy": float(accuracy),
     }
+
+
+def surface_distances(prediction: np.ndarray, target: np.ndarray) -> np.ndarray:
+    prediction = prediction.astype(bool)
+    target = target.astype(bool)
+    if not prediction.any() and not target.any():
+        return np.asarray([0.0], dtype=np.float64)
+    if not prediction.any() or not target.any():
+        return np.asarray([float("inf")], dtype=np.float64)
+
+    prediction_surface = np.logical_xor(prediction, binary_erosion(prediction))
+    target_surface = np.logical_xor(target, binary_erosion(target))
+    prediction_to_target = distance_transform_edt(~target_surface)[prediction_surface]
+    target_to_prediction = distance_transform_edt(~prediction_surface)[target_surface]
+    return np.concatenate([prediction_to_target, target_to_prediction]).astype(np.float64)
+
+
+def hausdorff95(prediction: np.ndarray, target: np.ndarray) -> float:
+    distances = surface_distances(prediction, target)
+    if np.isinf(distances).any():
+        return float("inf")
+    return float(np.percentile(distances, 95))
 
 
 def load_model(model_path: Path, device: torch.device) -> SmallUNet:
@@ -164,16 +188,27 @@ def main() -> None:
     rows = []
     aggregate_counts = {"tp": 0, "fp": 0, "fn": 0, "tn": 0}
     for case_index, case in enumerate(tqdm(test_cases, desc="patient_eval"), start=1):
+        if device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(device)
+        start_time = time.perf_counter()
         prediction = predict_case(model, case, device, args.threshold)
+        inference_seconds = time.perf_counter() - start_time
         target = load_case_segmentation(case).astype(bool)
         counts = confusion_counts(prediction, target)
         metrics = metrics_from_counts(counts)
+        hd95 = hausdorff95(prediction, target)
+        peak_gpu_memory_mb = (
+            float(torch.cuda.max_memory_allocated(device) / (1024**2)) if device.type == "cuda" else 0.0
+        )
         for key in aggregate_counts:
             aggregate_counts[key] += counts[key]
         row = {
             "case_id": case.case_id,
             **counts,
             **metrics,
+            "hausdorff95_voxels": hd95,
+            "inference_seconds": inference_seconds,
+            "peak_gpu_memory_mb": peak_gpu_memory_mb,
             "predicted_tumor_voxels": int(prediction.sum()),
             "ground_truth_tumor_voxels": int(target.sum()),
         }
@@ -204,7 +239,17 @@ def main() -> None:
         "aggregate_metrics": metrics_from_counts(aggregate_counts),
         "case_metric_summary": {
             metric: summarize([float(row[metric]) for row in rows])
-            for metric in ["dice", "iou", "precision", "recall", "specificity", "accuracy"]
+            for metric in [
+                "dice",
+                "iou",
+                "precision",
+                "recall",
+                "specificity",
+                "accuracy",
+                "hausdorff95_voxels",
+                "inference_seconds",
+                "peak_gpu_memory_mb",
+            ]
         },
         "case_metrics_csv": str(csv_path),
         "overlay_dir": str(overlay_dir),

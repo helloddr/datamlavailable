@@ -33,6 +33,9 @@ The evaluator uses deterministic patient-level splitting with seed `42`.
 | Recall | 0.9395 |
 | Specificity | 0.9976 |
 | Accuracy | 0.9970 |
+| Hausdorff-95 | 5.2751 voxels |
+| Mean inference time | 2.1934 seconds/case |
+| Peak GPU memory | 46.7314 MB |
 
 ## Case-Level Dice Summary
 

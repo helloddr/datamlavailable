@@ -108,6 +108,9 @@ Aggregate quick patient-level metrics:
 | Recall | 0.9395 |
 | Specificity | 0.9976 |
 | Accuracy | 0.9970 |
+| Hausdorff-95 | 5.2751 voxels |
+| Mean inference time | 2.1934 seconds/case |
+| Peak GPU memory | 46.7314 MB |
 
 Case-level Dice summary:
 
@@ -120,7 +123,29 @@ Case-level Dice summary:
 
 This quick run is encouraging, but a full patient-level test evaluation should be run before formal submission.
 
-## 7. Comparison Positioning
+## 7. Ablation Study Plan
+
+The current completed run supports a preliminary ablation narrative, but a formal ablation should be run before submission.
+
+| Configuration | Purpose | Current Status |
+|---|---|---|
+| Tumor-only training | Learn foreground tumor representation | Completed; checkpoint reached Dice 0.8978 during Stage 1 validation |
+| Tumor + non-tumor continuation | Improve background discrimination | Completed; final sampled-slice test Dice 0.7988 |
+| Visual error analysis | Assess false positive and false negative regions | Completed for selected cases |
+| Quick patient-level evaluation | Reduce slice-level validation weakness | Completed on 5 held-out cases |
+| Full patient-level evaluation | Stronger publication result | Recommended next |
+
+Recommended formal ablation table:
+
+| Experiment | Expected Question |
+|---|---|
+| No tumor-aware sampling | Does sampling matter? |
+| Tumor-only slices | How much foreground learning helps? |
+| Tumor + non-tumor slices | Does background exposure improve robustness? |
+| Slice stride 24 vs 12 vs 8 | Does denser slice coverage improve Dice? |
+| 2D U-Net vs larger U-Net | Is performance limited by capacity? |
+
+## 8. Comparison Positioning
 
 This method should be compared as a lightweight baseline rather than a SOTA model.
 
@@ -130,7 +155,19 @@ This method should be compared as a lightweight baseline rather than a SOTA mode
 | Transformer 3D models | Higher | Very high | More memory-intensive |
 | This 2D U-Net framework | Moderate | Low | Efficient baseline with visual interpretability |
 
-## 8. Limitations
+## 9. Clinical Interpretability / Explainability
+
+The project includes prediction overlays, ground-truth overlays, and error maps. These visual outputs support clinical-style review by showing where the model agrees or disagrees with reference masks.
+
+The explainability contribution is:
+
+- MRI slice visualization
+- predicted tumor mask visualization
+- ground-truth comparison
+- red/blue error maps for false positives and false negatives
+- montage summaries for quick review
+
+## 10. Limitations
 
 - The current final training used sampled slices rather than all slices.
 - The original final training report used a slice-level sampled split.
@@ -139,7 +176,7 @@ This method should be compared as a lightweight baseline rather than a SOTA mode
 - Hausdorff-95 is not yet included in the final report.
 - This is not a clinical diagnostic system.
 
-## 9. Future Work
+## 11. Future Work
 
 Recommended next steps:
 
@@ -149,6 +186,6 @@ Recommended next steps:
 4. Compare against 3D U-Net, nnU-Net, and SwinUNETR literature.
 5. Train with smaller slice stride or 3D patches when stronger GPU resources are available.
 
-## 10. Conclusion
+## 12. Conclusion
 
 The project produced a working, low-compute BraTS MRI tumor segmentation pipeline with a final sampled-slice test Dice of 0.7988 and interpretable visual outputs. The strongest publication direction is a lightweight, reproducible, explainable baseline for resource-constrained MRI segmentation research.
